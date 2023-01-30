@@ -1,7 +1,7 @@
 // DAZ Studio version 4.12 filetype DAZ Script
 //=====================================================
 // Name: Content Remover
-// Version: 0.3
+// Version: 0.5
 // Descr:
 // It will remove the content you selected from content library, including all the related files and folders in data and runtime folder.
 // Notice: It will remove the whole product, not just the file you selected.
@@ -275,7 +275,7 @@ var productFilePaths;
 
 
 var productImageFolderPath = "";
-var productImagePathList = ""
+var productImagePathList = [];
 var productModifierFolderPath = "";
 var productSceneDataFolderPath = "";
 
@@ -499,6 +499,7 @@ function RemoveAllDataFolders() {
         productImageFolderPath = "";
         productModifierFolderPath = "";
         productSceneDataFolderPath = "";
+        productImagePathList = [];
 
     }
 
@@ -508,6 +509,8 @@ function RemoveAllDataFolders() {
 
 //get all data and runtime folder path and file list
 function GetDataFolder(productFile) {
+    debug("Run GetDataFolder");
+
     //check error
     if(hasError){
         return;
@@ -577,48 +580,69 @@ function GetDataFolder(productFile) {
     //this is a related path, not full path
     var imageFolderPath = "";
     //get image path list
-    //var productImagePathList = [];
+    //productImagePathList = [];
+    var item = null;
 
-    for item in productFileContent.image_library {
-        if (item.map) {
-            if (item.map.length > 0) {
-                if (item.map[0].url) {
-                    if (item.map[0].url.length > 0) {
-                        //get image file path
-                        imagePath = decodeURI(item.map[0].url);
 
-                        //get folder path
-                        imageFolderPath = imagePath.slice(0, imagePath.lastIndexOf("/"));
+    if (productFileContent.image_library) {
+        debug("find image_library");
 
-                        if (imageFolderPath.length > 0) {
+        if (productFileContent.image_library.length > 0) {
+            //debug("image_library.length: " + productFileContent.image_library.length);
 
-                            //check path is not a protect path
-                            if (protectFolderPath.indexOf(imageFolderPath)<0) {
-                                //get full path as product image folder path
-                                //productImageFolderPath = basePath + imageFolderPath;
-                                //debug("productImageFolderPath: ", productImageFolderPath);    
+            for (var i=0; i < productFileContent.image_library.length; i++) {
+                item = productFileContent.image_library[i];
 
-                                //add to list
-                                productImagePathList.push(imagePath);
+                if (item.map) {
+                    debug("find item.map");
+                    if (item.map.length > 0) {
+                        //debug("item.map.length: " + item.map.length);
+                        if (item.map[0].url) {
+                            debug("find url");
+                            if (item.map[0].url.length > 0) {
+                                //debug("url.length: " + item.map[0].url.length);
+                                //get image file path
+                                imagePath = decodeURI(item.map[0].url);
+                                debug("imagePath: ", imagePath);
 
-                            } else {
-                                //warning
-                                debug("This product is using protected folder: ", imageFolderPath);
-                                if (!isWarned) {
-                                    isWarned = true;
-                                    MessageBox.critical("This Product is using protected folder: "+imageFolderPath +", You need handle this folder by hand", "Protect Folder Found", "&OK");
+                                //get folder path
+                                imageFolderPath = imagePath.slice(0, imagePath.lastIndexOf("/"));
+                                debug("imageFolderPath: ", imageFolderPath); 
+
+                                if (imageFolderPath.length > 0) {
+
+                                    //check path is not a protect path
+                                    if (protectFolderPath.indexOf(imageFolderPath)<0) {
+                                        //get full path as product image folder path
+                                        //productImageFolderPath = basePath + imageFolderPath;
+                                        imagePath = basePath + imagePath;
+                                        
+                                        debug("productImageFolderPath: ", productImageFolderPath);    
+                                        debug("add imagePath: ", imagePath);
+
+                                        //add to list
+                                        productImagePathList.push(imagePath);
+
+                                    } else {
+                                        //warning
+                                        debug("This product is using protected folder: ", imageFolderPath);
+                                        if (!isWarned) {
+                                            isWarned = true;
+                                            MessageBox.critical("This Product is using protected folder: "+imageFolderPath +", You need handle this folder by hand", "Protect Folder Found", "&OK");
+                                        }
+                                        
+                                    }
+
                                 }
-                                
+
                             }
-
                         }
-
-
                     }
                 }
             }
         }
     }
+
 
 
 
@@ -762,8 +786,8 @@ function RemoveProductDataFolder() {
     //init
     var folder;
 
-    //only remove image files, not the whole folder
-    for (var i=0;i<productImagePathList.length;i++) {
+    //remove image files, not the whole folder
+    for (var i = 0; i < productImagePathList.length; i++ ) {
         //remove every image file
         RemoveFileByPath(productImagePathList[i])
     }
@@ -836,8 +860,10 @@ function RemoveProductFolder() {
 }
 
 
-//remove a singole file by path
+//remove a single file by path
 function RemoveFileByPath(path) {
+    debug("Run RemoveFileByPath");
+
     //check error
     if(hasError){
         return;
@@ -874,7 +900,7 @@ function RemoveFileByPath(path) {
 //remove a folder and all its content
 //folder.rmdir() can only remove empty folder, so we need a function to remove a folder with content.
 function RemoveFolder(folder) {
-    //debug("start RemoveFolder");
+    debug("start RemoveFolder");
 
     //check error
     if(hasError){

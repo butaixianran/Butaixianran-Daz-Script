@@ -2,7 +2,7 @@
 //=====================================================
 // Name: Iray Thumbnail Creator
 // Author: butaixianran
-// Version: 0.1
+// Version: 0.2
 // Descr:
 //     Render an iray image as current scene or user selected preset file's thumbnail
 // How it works:
@@ -21,7 +21,7 @@
 // script info
 var programName = "IrayThumbnailCreator";
 var versionName = "v1";
-var thumbnailSize = 256;
+var thumbnailSize = 512;
 var maxSamples = 100;
 
 // user selected file path or scene file path
