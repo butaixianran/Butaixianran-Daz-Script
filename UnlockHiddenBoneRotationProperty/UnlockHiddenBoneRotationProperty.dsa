@@ -1,0 +1,43 @@
+//==================================================================
+// This script will unlock all the hidden x,y,z rotation properties on selected character
+//==================================================================
+
+
+function UnlockThem() {
+
+  //get selected character
+  var character = Scene.getSelectedSkeleton(0);
+
+  if (!character) {
+    MessageBox.information( qsTr("You need to select a skeleton"), qsTr("Error"), qsTr("&OK") );
+    return
+  }
+
+
+  //get children
+  var children = character.getNodeChildren(true)
+  var child = null
+  for(var i=0;i<children.length;i++) {
+    //get x,y,z rotation properties
+    child = children[i]
+    x = child.getXRotControl()
+    y = child.getYRotControl()
+    z = child.getZRotControl()
+
+    //unlock it
+    if (x) {
+      x.lock(false)
+    }
+
+    if (y) {
+      y.lock(false)
+    }
+
+    if (z) {
+      z.lock(false)
+    }
+  }
+
+}
+
+UnlockThem()

@@ -1,0 +1,973 @@
+// DAZ Studio version 4.12 filetype DAZ Script
+//=====================================================
+// Name: Content Remover
+// Version: 0.3
+// Descr:
+// It will remove the content you selected from content library, including all the related files and folders in data and runtime folder.
+// Notice: It will remove the whole product, not just the file you selected.
+//
+// Author: Butaixianran
+// All right reserved
+//=====================================================
+
+
+
+
+//==================================================================
+// Init
+//==================================================================
+//DataFolderPathBase is Content Library path.
+var basePath = App.getDataFolderPathBase();
+debug("App.getDataFolderPathBase: ", basePath);
+
+
+
+//protect folder path, these path should not be handled
+var protectFolderPath = [
+    "/",
+    "/aniBlocks",
+    "/Animals",
+    "/Camera Presets",
+    "/Environments",
+    "/Environments/Architecture",
+    "/Figures",
+    "/Light Presets",
+    "/Lights",
+    "/People/Genesis",
+    "/People/Genesis/Accessories",
+    "/People/Genesis/Characters",
+    "/People/Genesis/Clothing",
+    "/People/Genesis/Expressions",
+    "/People/Genesis/Hair",
+    "/People/Genesis/Materials",
+    "/People/Genesis/Poses",
+    "/People/Genesis/Props",
+    "/People/Genesis/Shapes",
+    "/People/Genesis 2 Female",
+    "/People/Genesis 2 Female/Accessories",
+    "/People/Genesis 2 Female/Characters",
+    "/People/Genesis 2 Female/Clothing",
+    "/People/Genesis 2 Female/Expressions",
+    "/People/Genesis 2 Female/Hair",
+    "/People/Genesis 2 Female/Materials",
+    "/People/Genesis 2 Female/Poses",
+    "/People/Genesis 2 Female/Props",
+    "/People/Genesis 2 Female/Shapes",
+    "/People/Genesis 2 Male",
+    "/People/Genesis 2 Male/Accessories",
+    "/People/Genesis 2 Male/Characters",
+    "/People/Genesis 2 Male/Clothing",
+    "/People/Genesis 2 Male/Expressions",
+    "/People/Genesis 2 Male/Hair",
+    "/People/Genesis 2 Male/Materials",
+    "/People/Genesis 2 Male/Poses",
+    "/People/Genesis 2 Male/Props",
+    "/People/Genesis 2 Male/Shapes",
+    "/People/Genesis 3 Female",
+    "/People/Genesis 3 Female/Accessories",
+    "/People/Genesis 3 Female/Characters",
+    "/People/Genesis 3 Female/Clothing",
+    "/People/Genesis 3 Female/Expressions",
+    "/People/Genesis 3 Female/Hair",
+    "/People/Genesis 3 Female/Materials",
+    "/People/Genesis 3 Female/Poses",
+    "/People/Genesis 3 Female/Props",
+    "/People/Genesis 3 Female/Shapes",
+    "/People/Genesis 3 Male",
+    "/People/Genesis 3 Male/Accessories",
+    "/People/Genesis 3 Male/Characters",
+    "/People/Genesis 3 Male/Clothing",
+    "/People/Genesis 3 Male/Expressions",
+    "/People/Genesis 3 Male/Hair",
+    "/People/Genesis 3 Male/Materials",
+    "/People/Genesis 3 Male/Poses",
+    "/People/Genesis 3 Male/Props",
+    "/People/Genesis 3 Male/Shapes",
+    "/People/Genesis 8 Female",
+    "/People/Genesis 8 Female/Accessories",
+    "/People/Genesis 8 Female/Animations",
+    "/People/Genesis 8 Female/Characters",
+    "/People/Genesis 8 Female/Clothing",
+    "/People/Genesis 8 Female/Expressions",
+    "/People/Genesis 8 Female/Hair",
+    "/People/Genesis 8 Female/Materials",
+    "/People/Genesis 8 Female/Poses",
+    "/People/Genesis 8 Female/Props",
+    "/People/Genesis 8 Female/Shapes",
+    "/People/Genesis 8 Male",
+    "/People/Genesis 8 Male/Accessories",
+    "/People/Genesis 8 Male/Animations",
+    "/People/Genesis 8 Male/Characters",
+    "/People/Genesis 8 Male/Clothing",
+    "/People/Genesis 8 Male/Expressions",
+    "/People/Genesis 8 Male/Hair",
+    "/People/Genesis 8 Male/Materials",
+    "/People/Genesis 8 Male/Poses",
+    "/People/Genesis 8 Male/Props",
+    "/People/Genesis 8 Male/Shapes",
+    "/People/Genesis 8.1 Female",
+    "/People/Genesis 8.1 Female/Accessories",
+    "/People/Genesis 8.1 Female/Animations",
+    "/People/Genesis 8.1 Female/Characters",
+    "/People/Genesis 8.1 Female/Clothing",
+    "/People/Genesis 8.1 Female/Expressions",
+    "/People/Genesis 8.1 Female/Hair",
+    "/People/Genesis 8.1 Female/Materials",
+    "/People/Genesis 8.1 Female/Poses",
+    "/People/Genesis 8.1 Female/Props",
+    "/People/Genesis 8.1 Female/Shapes",
+    "/People/Genesis 8.1 Male",
+    "/People/Genesis 8.1 Male/Accessories",
+    "/People/Genesis 8.1 Male/Animations",
+    "/People/Genesis 8.1 Male/Characters",
+    "/People/Genesis 8.1 Male/Clothing",
+    "/People/Genesis 8.1 Male/Expressions",
+    "/People/Genesis 8.1 Male/Hair",
+    "/People/Genesis 8.1 Male/Materials",
+    "/People/Genesis 8.1 Male/Poses",
+    "/People/Genesis 8.1 Male/Props",
+    "/People/Genesis 8.1 Male/Shapes",
+    "/Poses",
+    "/Presets",
+    "/Presets/Cameras",
+    "/Presets/Characters",
+    "/Presets/Lights",
+    "/Presets/Materials",
+    "/Presets/Poses",
+    "/Presets/Properties",
+    "/Presets/Render Settings",
+    "/Presets/Shaders",
+    "/Presets/Shaping",
+    "/Presets/Wearables", 
+    "/Props",
+    "/Render Presets",
+    "/Scenes",
+    "/Scripts",
+    "/Shader Presets",
+    "/Shaders",
+    "/Templates",
+    "/Vehicles",
+    "/Runtime", 
+    "/Runtime/Textures", 
+    "/Runtime/Texture", 
+    "/data", 
+    "/data/DAZ 3D", 
+    "/data/DAZ 3D/Genesis 8", 
+    "/data/DAZ 3D/Genesis 8/Female", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs",
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Base Correctives", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Base Flexions", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Base Pose", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Base Pose Head", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Body", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Clones", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Expressions", 
+    "/data/DAZ 3D/Genesis 8/Female/Morphs/DAZ 3D/Head", 
+    "/data/DAZ 3D/Genesis 8/Male", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs",
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Base Correctives", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Base Flexions", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Base Pose", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Base Pose Head", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Body", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Clones", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Expressions", 
+    "/data/DAZ 3D/Genesis 8/Male/Morphs/DAZ 3D/Head", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs",
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Base Correctives", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Base Flexions", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Base Pose", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Base Pose Head", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Body", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Clones", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Expressions", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Eyelashes", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/FACS", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/FACSExpressions", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Head", 
+    "/data/DAZ 3D/Genesis 8/Female 8_1/Morphs/DAZ 3D/Mouth Realism", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs",
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Base Correctives", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Base Flexions", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Base Pose", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Base Pose Head", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Body", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Clones", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Expressions", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Eyelashes", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/FACS", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/FACSExpressions", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Head", 
+    "/data/DAZ 3D/Genesis 8/Male 8_1/Morphs/DAZ 3D/Mouth Realism", 
+    "/data/DAZ 3D/Genesis 3", 
+    "/data/DAZ 3D/Genesis 3/Female", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs",
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Base Correctives", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Base Flexions", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Base Pose", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Base Pose Head", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Body", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Clones", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Expressions", 
+    "/data/DAZ 3D/Genesis 3/Female/Morphs/DAZ 3D/Head", 
+    "/data/DAZ 3D/Genesis 3/Male", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs",
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Base Correctives", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Base Flexions", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Base Pose", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Base Pose Head", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Body", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Clones", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Expressions", 
+    "/data/DAZ 3D/Genesis 3/Male/Morphs/DAZ 3D/Head", 
+    "/data/DAZ 3D/Genesis 2", 
+    "/data/DAZ 3D/Genesis 2/Female", 
+    "/data/DAZ 3D/Genesis 2/Female/Morphs",
+    "/data/DAZ 3D/Genesis 2/Female/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 2/Female/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 2/Female/Morphs/DAZ 3D/Control Rig", 
+    "/data/DAZ 3D/Genesis 2/Female/Morphs/DAZ 3D/Evolution Body", 
+    "/data/DAZ 3D/Genesis 2/Female/Morphs/DAZ 3D/Evolution Head", 
+    "/data/DAZ 3D/Genesis 2/Male", 
+    "/data/DAZ 3D/Genesis 2/Male/Morphs",
+    "/data/DAZ 3D/Genesis 2/Male/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis 2/Male/Morphs/DAZ 3D/Base", 
+    "/data/DAZ 3D/Genesis 2/Male/Morphs/DAZ 3D/Control Rig", 
+    "/data/DAZ 3D/Genesis 2/Male/Morphs/DAZ 3D/Evolution Body", 
+    "/data/DAZ 3D/Genesis 2/Male/Morphs/DAZ 3D/Evolution Head", 
+    "/data/DAZ 3D/Genesis", 
+    "/data/DAZ 3D/Genesis/Base",
+    "/data/DAZ 3D/Genesis/Base/Morphs",
+    "/data/DAZ 3D/Genesis/Base/Morphs/DAZ 3D",
+    "/data/DAZ 3D/Genesis/Base/Morphs/DAZ 3D/Base",
+    "/data/DAZ 3D/Genesis/Base/Morphs/DAZ 3D/Control Rig",
+    "/data/DAZ 3D/Genesis/Base/Morphs/DAZ 3D/Evolution"];
+
+
+//only show warning once
+var isWarned = false;
+
+
+var hasError = false;
+
+
+// user selected file
+var userFile;
+var userFilePath = "";
+
+// product related
+var productFolderPath = "";
+var productFilePaths;
+
+
+var productImageFolderPath = "";
+var productImagePathList = ""
+var productModifierFolderPath = "";
+var productSceneDataFolderPath = "";
+
+//count
+var folderCount = 0;
+var fileCount = 0;
+
+
+
+
+
+//==================================================================
+//  Use selected file path as user file path
+//==================================================================
+
+//main function
+(function(){
+    debug("Content Deleter Start");
+
+    //warning
+    if( MessageBox.warning( qsTr("Are you sure you want to remove selected product?"), qsTr("Confirm"), qsTr("&Yes"), qsTr("&Cancel") ) == 1 ){
+        return;
+    }
+
+    //get user select file and folder path
+    GetSeletedFileAndFolder();
+
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //get all files from user selected file's folder
+    GetProductFiles();
+
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //remove all data folders of all the product files
+    RemoveAllDataFolders();
+
+    //remove this product folder
+    RemoveProductFolder();
+
+    //show msg
+    var msg = "Removed " + folderCount + " folders with " + fileCount + " files";
+    MessageBox.information(msg, "Done", "&OK");
+
+    debug("Content Deleter End");
+
+    
+})();
+
+
+
+//get user select file and folder path
+function GetSeletedFileAndFolder() {
+    //debug("GetSeletedFileAndFolder start");
+
+    // get Content Library Pane
+    var oPaneMgr = MainWindow.getPaneMgr();
+    var oPane = oPaneMgr.findPane("DzContentLibraryPane");
+
+    if (!oPane) {
+        MessageBox.critical("Can not find Content Library Pane.", "No CL Pane", "&OK");
+        debug("can't not find Content Library Pane, return");
+        hasError = true;
+        return;
+    }
+
+    //get all selected items
+    //getSelectedAssets() is offered by ContentLibrary Pane Plugin, so it can not be found from SDK document.
+    var aAssets = oPane.getSelectedAssets();
+
+    if (!aAssets) {
+        MessageBox.critical("Can not find selected asset from Content Library.", "No asset is selected", "&OK");
+        debug("can not find seleted asset, return");
+        hasError = true;
+        return;
+    }
+
+    if (aAssets.length < 1) {
+        MessageBox.critical("You need to select a data file from Content Library.", "No file is select", "&OK");
+        debug("can not find seleted file");
+        hasError = true;
+        return;
+    }
+
+    //use the first selected item as user selected file.
+    //getAsLocalFile return a file url
+    userFilePath = aAssets[0].getAsLocalFile();
+    debug("userFilePath: ", userFilePath);
+
+    //check user file path
+    if (!userFilePath) {
+        MessageBox.critical("Can not get selected file path.", "No file path", "&OK");
+        debug("can not find seleted file path");
+        hasError = true;
+        return;
+    }
+
+    //get file object from this path, DzGZFile is for both compressed and uncompressed files.
+    userFile = new DzGZFile(userFilePath);
+
+    //check exist
+    if (!userFile.exists()) {
+        MessageBox.critical("User file does not exist.", "File not exist", "&OK");
+        debug("User file does not exist");
+        hasError = true;
+        return;
+    }
+
+
+
+    //user file must be a .duf file.
+    if(userFile.suffix() != "duf" && userFile.suffix() != "dsf") {
+        MessageBox.critical("Selected file is not a .duf or .dsf file", "Not a Duf or Dsf file", "&OK");
+        debug("Selected file is not a .duf or .dsf file");
+        hasError = true;
+        return;
+    }
+
+
+    //get product path from file path
+    productFolderPath = userFilePath.slice(0, userFilePath.lastIndexOf("/"));
+    //debug("productFolderPath: ", productFolderPath);
+    if (!productFolderPath || productFolderPath.length == 0) {
+        MessageBox.critical("Fail to get product folder path", "No folder", "&OK");
+        debug("Fail to get product folder path");
+        hasError = true;
+        return;
+    }
+
+
+    //debug("GetSeletedFileAndFolder end");
+
+}
+
+
+
+//get all files from user selected file's folder
+function GetProductFiles(){
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //check productFolderPath
+    if (!productFolderPath || productFolderPath.length==0) {
+        debug("productFolderPath is empty");
+        hasError = true;
+        return;
+    }
+
+    var folder = new DzDir(productFolderPath);
+
+    //get all .duf files' path from this dir.
+    productFilePaths = folder.getFilesFromDir(["*.duf", "*.dsf"]);
+
+    
+}
+
+
+//remove all data folders of all the product files
+function RemoveAllDataFolders() {
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //check productFilePaths
+    if (!productFilePaths || productFilePaths.length==0) {
+        MessageBox.critical("No product file is found", "No file", "&OK");
+        debug("No product file is found");
+        hasError = true;
+        return;
+    }
+
+    //handle all product files
+    var productFile;
+    for (var i=0;i<productFilePaths.length;i++) {
+        //debug("productFilePaths[", i ,"]:", productFilePaths[i]);
+        //get file object from this path, DzGZFile is for both compressed and uncompressed files.
+        productFile = new DzGZFile(productFilePaths[i]);
+
+        //check exist
+        if (!productFile.exists()) {
+            MessageBox.critical("User file does not exist.", "File not exist", "&OK");
+            debug("Product file does not exist: ", productFilePaths[i]);
+            hasError = true;
+            return;
+        }
+
+        //product file must be a .duf file.
+        if(productFile.suffix() != "duf" && productFile.suffix() != "dsf") {
+            MessageBox.critical("Selected file is not a .duf or .dsf file", "Not a Duf or Dsf file", "&OK");
+            debug("Product file is not a .duf or .dsf file: ", productFilePaths[i]);
+            hasError = true;
+            return;
+        }
+
+        //get this file's data folder
+        GetDataFolder(productFile);
+
+        //check error
+        if(hasError){
+            return;
+        }
+
+        //debug
+        debug("productImageFolderPath: ", productImageFolderPath);
+        debug("productModifierFolderPath: ", productModifierFolderPath);
+        debug("productSceneDataFolderPath: ", productSceneDataFolderPath);
+
+        //remove this file's data folder
+        RemoveProductDataFolder();
+
+        //reset data folder path
+        productImageFolderPath = "";
+        productModifierFolderPath = "";
+        productSceneDataFolderPath = "";
+
+    }
+
+}
+
+
+
+//get all data and runtime folder path and file list
+function GetDataFolder(productFile) {
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //check productFile
+    if(!productFile) {
+        return;
+    }
+
+    if (!productFile.exists()) {
+        return;
+    }
+
+
+    //read productFile content, which should be a .duf file with json format
+    debug("productFile path: ", productFile.absoluteFilePath());
+
+    var content = "";
+    if ( productFile.open( productFile.ReadOnly ) ) {
+         content = productFile.read();
+         productFile.close();
+    } else {
+        MessageBox.critical("Open file failed: " + productFile.absoluteFilePath(), "Open file failed", "&OK");
+        debug("Open file failed: ", productFile.absoluteFilePath());
+        hasError = true;
+        return;
+    }
+
+    //debug("content.length: ", content.length);
+
+    if (!content) {
+        MessageBox.critical("File has no content", "No file content", "&OK");
+        debug("File has no content");
+        hasError = true;
+        return;
+    }
+
+    if (content.length == 0) {
+        MessageBox.critical("File is empty", "Empty file", "&OK");
+        debug("File is empty");
+        hasError = true;
+        return;
+    }
+
+    //parse file content into json
+    var productFileContent = JSON.parse(content);
+
+    if (!productFileContent) {
+        MessageBox.critical("File content is not in json format", "Not a json file", "&OK");
+        debug("File content is not in json format");
+        hasError = true;
+        return;
+    }
+
+
+    //file path example in json data:
+    //image_library:[{map:[{url:"/Runtime/textures/LilFlameIV/WonderDress/WDress_BM_01.jpg"}]}]
+    //modifier_library:[{parent:"/data/lilflame/Wonder%20Dress/Wonder%20Dress/Wonder_Dress_7832.dsf#Wonder_Dress_7832"}]
+    //scene:nodes:[{url:"/data/lilflame/Wonder%20Dress/Wonder%20Dress/Wonder_Dress_7832.dsf#Wonder_Dress_7832"}]
+    //scene:nodes:[{geometries:[{url:"/data/lilflame/Wonder%20Dress/Wonder%20Dress/Wonder_Dress_7832.dsf#Wonder_Dress"}]}]
+
+    //we need to get those url from json data, then get all the folder path into a list.
+
+    //get path from image_library
+    var imagePath = "";
+    //this is a related path, not full path
+    var imageFolderPath = "";
+    //get image path list
+    //var productImagePathList = [];
+
+    for item in productFileContent.image_library {
+        if (item.map) {
+            if (item.map.length > 0) {
+                if (item.map[0].url) {
+                    if (item.map[0].url.length > 0) {
+                        //get image file path
+                        imagePath = decodeURI(item.map[0].url);
+
+                        //get folder path
+                        imageFolderPath = imagePath.slice(0, imagePath.lastIndexOf("/"));
+
+                        if (imageFolderPath.length > 0) {
+
+                            //check path is not a protect path
+                            if (protectFolderPath.indexOf(imageFolderPath)<0) {
+                                //get full path as product image folder path
+                                //productImageFolderPath = basePath + imageFolderPath;
+                                //debug("productImageFolderPath: ", productImageFolderPath);    
+
+                                //add to list
+                                productImagePathList.push(imagePath);
+
+                            } else {
+                                //warning
+                                debug("This product is using protected folder: ", imageFolderPath);
+                                if (!isWarned) {
+                                    isWarned = true;
+                                    MessageBox.critical("This Product is using protected folder: "+imageFolderPath +", You need handle this folder by hand", "Protect Folder Found", "&OK");
+                                }
+                                
+                            }
+
+                        }
+
+
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+    //get path from modifier_library
+    var modifierPath = "";
+    //this is a related path, not full path
+    var modifierFolderPath = "";
+
+    if (productFileContent.modifier_library) {
+        if (productFileContent.modifier_library.length) {
+            if (productFileContent.modifier_library[0].parent) {
+                if (productFileContent.modifier_library[0].parent.length > 0) {
+                    //get file path
+                    //url from .duf file is encoded. so it must be decoded.
+                    modifierPath = decodeURI(productFileContent.modifier_library[0].parent);
+                    //get folder path
+                    modifierFolderPath = modifierPath.slice(0, modifierPath.lastIndexOf("/"));
+
+                    if (modifierFolderPath.length > 0) {
+
+                        //check path is not a protect path
+                        if (protectFolderPath.indexOf(modifierFolderPath)<0) {
+                            //get full path as product modifier folder path
+                            productModifierFolderPath = basePath + modifierFolderPath;
+                            //debug("productModifierFolderPath: ", productModifierFolderPath);                        
+                        } else {
+                            //warning
+                            debug("This product is using protected folder: ", modifierFolderPath);
+                            if (!isWarned) {
+                                isWarned = true;
+                                MessageBox.critical("This Product is using protected folder: "+modifierFolderPath +", You need handle this folder by hand", "Protect Folder Found", "&OK");
+                            }
+                        }
+
+                    }
+
+                }
+
+            }
+        }
+    } else if(productFileContent.modifiers) {
+        if (productFileContent.modifiers.length) {
+            if (productFileContent.modifiers[0]) {
+                if (productFileContent.modifiers[0].url) {
+                    if (productFileContent.modifiers[0].url) {
+                        if (productFileContent.modifiers[0].url.length) {
+                            //get file path
+                            //url from .duf file is encoded. so it must be decoded.
+                            modifierPath = decodeURI(productFileContent.modifiers[0].url);
+                            //get folder path
+                            modifierFolderPath = modifierPath.slice(0, modifierPath.lastIndexOf("/"));
+
+                            if (modifierFolderPath.length > 0) {
+
+                                //check path is not a protect path
+                                if (protectFolderPath.indexOf(modifierFolderPath)<0) {
+                                    //get full path as product modifier folder path
+                                    productModifierFolderPath = basePath + modifierFolderPath;
+                                    //debug("productModifierFolderPath: ", productModifierFolderPath);
+                                } else {
+                                    //warning
+                                    debug("This product is using protected folder: ", modifierFolderPath);
+                                    if (!isWarned) {
+                                        isWarned = true;
+                                        MessageBox.critical("This Product is using protected folder: "+modifierFolderPath +", You need handle this folder by hand", "Protect Folder Found", "&OK");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+    }
+
+
+
+    //get path from scene data
+    var sceneDataPath = "";
+    //this is a related path, not full path
+    var sceneDataFolderPath = "";
+
+    if (productFileContent.scene) {
+        if (productFileContent.scene.nodes) {
+            if (productFileContent.scene.nodes.length) {
+                if (productFileContent.scene.nodes[0]) {
+                    if (productFileContent.scene.nodes[0].url) {
+                        if (productFileContent.scene.nodes[0].url.length > 0) {
+                            //get file path
+                            //url from .duf file is encoded. so it must be decoded.
+                            sceneDataPath = decodeURI(productFileContent.scene.nodes[0].url);
+                            //get folder path
+                            sceneDataFolderPath = sceneDataPath.slice(0, sceneDataPath.lastIndexOf("/"));
+
+                            if (sceneDataFolderPath.length > 0) {
+
+                                //check path is not a protect path
+                                if (protectFolderPath.indexOf(sceneDataFolderPath)<0) {
+                                    //get full path as product scene data folder path
+                                    productSceneDataFolderPath = basePath + sceneDataFolderPath;
+                                    //debug("productSceneDataFolderPath: ", productSceneDataFolderPath);
+                                } else {
+                                    //warning
+                                    debug("This product is using protected folder: ", sceneDataFolderPath);
+                                    if (!isWarned) {
+                                        isWarned = true;
+                                        MessageBox.critical("This Product is using protected folder: "+sceneDataFolderPath +", You need handle this folder by hand", "Protect Folder Found", "&OK");
+                                    }
+                                }
+
+
+                            }
+
+                        }
+
+                    }
+                }
+            }
+
+        }
+    }
+
+    
+}
+
+
+
+
+function RemoveProductDataFolder() {
+    //debug("start RemoveProductDataFolder");
+
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //init
+    var folder;
+
+    //only remove image files, not the whole folder
+    for (var i=0;i<productImagePathList.length;i++) {
+        //remove every image file
+        RemoveFileByPath(productImagePathList[i])
+    }
+
+    //check error
+    if(hasError){
+        return;
+    }
+
+    if (productModifierFolderPath && productModifierFolderPath.length > 0) {
+        folder = new DzDir(productModifierFolderPath);
+
+        //check exist
+        if (folder.exists()) {
+            RemoveFolder(folder);
+        }
+
+
+    }
+
+    //check error
+    if(hasError){
+        return;
+    }
+
+    if (productSceneDataFolderPath && productSceneDataFolderPath.length > 0) {
+        folder = new DzDir(productSceneDataFolderPath);
+
+        //check exist
+        if (folder.exists()) {
+            debug("productSceneDataFolderPath exist");
+            RemoveFolder(folder);
+        }
+
+    }
+
+
+    //debug("end RemoveProductDataFolder");
+
+}
+
+
+
+//remove product folder
+function RemoveProductFolder() {
+    //check error
+    if(hasError){
+        return;
+    }
+
+
+    //init
+    var folder;
+
+    //remove product folder
+    if (productFolderPath && productFolderPath.length > 0) {
+        folder = new DzDir(productFolderPath);
+
+        //check exist
+        if (!folder.exists()) {
+            debug("productFolder is not exist: ", productFolderPath);
+            return;
+        }
+
+        RemoveFolder(folder);
+
+    }
+
+
+}
+
+
+//remove a singole file by path
+function RemoveFileByPath(path) {
+    //check error
+    if(hasError){
+        return;
+    }
+
+    if(path.length == 0) {
+        debug("file does not exist: ", path);
+        return;
+    }
+
+
+    file = new DzFile(path);
+
+    //check exist
+    if (!file.exists()) {
+        debug("file does not exist: ", path);
+        return;
+    }
+
+    //remove file
+    if(file.remove()) {
+        debug("removed file: ", path);
+        fileCount++;
+    } else {
+        hasError = true;
+        debug("remove file failed: ", path);
+        MessageBox.critical("Remove file failed: "+path, "Remove file failed", "&OK");
+        return;
+    }
+
+}
+
+
+//remove a folder and all its content
+//folder.rmdir() can only remove empty folder, so we need a function to remove a folder with content.
+function RemoveFolder(folder) {
+    //debug("start RemoveFolder");
+
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //check folder
+    if(!folder.exists()) {
+        debug("folder does not exist: ", folder.absolutePath());
+        return;
+    }
+
+    //get all file paths
+    var filePaths = folder.getFilesFromDir(["*.*"]);
+
+    //remove all files
+    var file;
+    for(var i=0;i<filePaths.length;i++) {
+        file = new DzFile(filePaths[i]);
+        //debug("filePaths[",i,"]:",filePaths[i]);
+
+        //check exist
+        if (!file.exists()) {
+            debug("file does not exist: ", filePaths[i]);
+            return;
+        }
+
+        //remove file
+        if(file.remove()) {
+            debug("removed file: ", filePaths[i]);
+            fileCount++;
+        } else {
+            hasError = true;
+            debug("remove file failed: ", filePaths[i]);
+            MessageBox.critical("Remove file failed: "+filePaths[i], "Remove file failed", "&OK");
+            return;
+        }
+    }
+
+    //remove all sub folders
+    RemoveFolderAndSubFolder(folder);
+
+    //debug("end RemoveFolder");
+
+
+}
+
+
+//remove a folder and its sub folders
+function RemoveFolderAndSubFolder(folder){
+    //check error
+    if(hasError){
+        return;
+    }
+
+    //check folder
+    if(!folder.exists()) {
+        debug("folder does not exist: ", folder.absolutePath());
+        return;
+    }
+
+    //get subfolder name
+    var subfolders = folder.entryList(DzDir.AllDirs);
+
+    //the first element is ".", second element is ".."
+    //so from the third element, is real sub folder name.
+    if (!subfolders || subfolders.length<3) {
+        //no sub folder, then remove this folder
+        if(folder.rmdir()) {
+            debug("removed folder: ", folder.absolutePath());
+            folderCount++;
+        } else {
+            debug("removed folder failed: ", folder.absolutePath());
+            hasError = true;
+        }
+
+        return;
+    }
+
+    //go to sub folder
+    var subfolder;
+    var subfolderPath;
+    for (var i=2;i<subfolders.length;i++) {
+        subfolderPath = folder.absolutePath() + "/" + subfolders[i];
+        subfolder = new DzDir(subfolderPath);
+
+        //go to subfolder and remove its folder and sub folder
+        RemoveFolderAndSubFolder(subfolder);
+    }
+
+    //then re-check current folder again
+    RemoveFolderAndSubFolder(folder);
+
+    
+}
+

@@ -1,0 +1,57 @@
+Basic Info
+====================
+Name: Simple Multi-Pass Render Iray
+Version: 0.2
+Descr:
+It will render images for each light without env, and one for env only without any light. So you can adjust each light in photoshop without re-rendering
+
+V0.2 will handle mess lights too.
+
+Here is why you need Multi-pass rendering:
+https://www.youtube.com/watch?v=F79cgGPEU_k
+
+
+How to use
+================
+* Click, that's all
+* It will use the file name and path from your render setting
+
+
+Daz forum
+================
+Any update will be there:
+https://www.daz3d.com/forums/discussion/451996/free-script-simple-multi-pass-render-iray
+
+
+Download
+================
+v0.2
+--------------
+mega:
+https://mega.nz/file/wiZiFD7Z#Kw-Ehds07clqRBQFr7ggq5aeTLyPBDcAy1Nq70WhWyM
+
+mediafire:
+https://www.mediafire.com/file/4xohviaemw8mot8/SimpleMultiPassRenderIrayV0.2.zip/file
+
+
+v0.1
+--------------
+mega:
+https://mega.nz/file/s3oQya4A#ILSzyUAA8UqqnLx5aBAbG3BFQt-hN-Jf4dB7fdSJpsU
+
+mediafire:
+http://www.mediafire.com/file/y6y2yvdec0d674m/SimpleMultiPassRenderIray.zip/file
+
+Youtube
+==============
+https://youtu.be/H3VyioTSHBk
+
+Music
+===========
+Bensound.com
+
+
+Old 3Delight Version
+================
+https://www.daz3d.com/forums/discussion/38514/multi-pass-rendering-script-freebie-for-daz-studio
+

@@ -1,0 +1,493 @@
+// DAZ Studio version 4.12 filetype DAZ Script
+//=====================================================
+// Name: Simple Multi-pass Render Iray
+// Version: 0.2
+// Descr:
+// It will render an image for each light and one for env only without any light.
+// V0.2 will handle mesh lights.
+//
+// Author:
+// modified from mCasual/Jacques's mcjListRender.dsa by Butaixianran
+// MIT License
+//=====================================================
+
+	var oRenderMgr = App.getRenderMgr();
+
+	var renderSettings = oRenderMgr.getRenderOptions();
+
+    //store renderSettings
+    var bCurrentFrameRender = renderSettings.isCurrentFrameRender;
+    var eRenderToId = renderSettings.renderImgToId;
+
+
+
+
+//==================================================================
+//
+//==================================================================
+
+    var node_num = Scene.getNumNodes();
+
+	var light_num = Scene.getNumLights();
+
+    //set mesh lights
+    var meshLight_num = 0;
+    var meshLightNodes = [];
+    var meshLightMats = [];
+    var luminanceProperties = [];
+    var luminancePropertyValues = [];
+
+    GetMeshLights();
+
+    //store env intensity value
+    var fEnvIntensity = GetEnvIntensity();
+
+    //get render file info from render setting
+    var renderFilename = renderSettings.renderImgFilename;
+    var renderFileInfo = new DzFileInfo( renderFilename );
+
+    //change render settings
+    renderSettings.isCurrentFrameRender = true;
+    renderSettings.renderImgToId = renderSettings.DirectToFile;
+
+
+
+
+    //render an image only with Env, without any light.
+    LightsOff();
+    MeshLightsOff();
+    renderSettings.renderImgFilename = renderFileInfo.absolutePath() + "/" + renderFileInfo.completeBaseName() + "-Env" + "." + renderFileInfo.extension();
+    oRenderMgr.doRender();
+
+
+    //set env intensity to 0
+    SetEnvIntensity(0);
+
+    //render a pure black image as background
+    //renderSettings.renderImgFilename = renderFileInfo.absolutePath() + "/" + renderFileInfo.completeBaseName() + "-Black" + "." + renderFileInfo.extension();
+    //oRenderMgr.doRender();
+
+
+	//render all lights one by one
+	for(var i=0; i<light_num; i++)
+	{
+		//turn off all lights
+		LightsOff();
+
+		//only render one light at a time
+		Scene.getLight(i).setVisible(true);
+
+
+        //set image path and name
+        renderSettings.renderImgFilename = renderFileInfo.absolutePath() + "/" + renderFileInfo.completeBaseName() + "-" + Scene.getLight(i).getName() + "." + renderFileInfo.extension();
+
+		oRenderMgr.doRender();
+	}
+
+    // turn off all lights, render only mesh lights one by one
+    LightsOff();
+    for(var i=0; i<meshLight_num; i++)
+    {
+        //turn off all mesh lights
+        MeshLightsOff();
+
+        //only render one mesh light at a time
+        luminanceProperties[i].setValue(luminancePropertyValues[i]);
+
+        //set image path and name
+        renderSettings.renderImgFilename = renderFileInfo.absolutePath() + "/" + renderFileInfo.completeBaseName() + "-" + meshLightNodes[i].getLabel() + "-" + meshLightMats[i].getLabel() + "." + renderFileInfo.extension();
+
+        oRenderMgr.doRender();
+    }
+
+
+    //restore env intensity
+    SetEnvIntensity(fEnvIntensity);
+
+    //restore render settings
+    renderSettings.isCurrentFrameRender = bCurrentFrameRender;
+    renderSettings.renderImgToId = eRenderToId;
+
+    //restore render image name
+    // debug("renderFileInfo.fileName: ", renderFileInfo.absFileName());
+    renderSettings.renderImgFilename = renderFileInfo.absFileName();
+    // debug("renderSettings.renderImgFilename: ", renderSettings.renderImgFilename);
+
+
+
+    //Lights on
+    LightsOn();
+    MeshLightsOn();
+
+
+
+function LightsOff()
+{
+    for (var j=0; j<Scene.getNumLights(); j++)
+    {
+        Scene.getLight(j).setVisible(false);
+    }
+
+}
+
+
+function LightsOn()
+{
+    for (var j=0; j<Scene.getNumLights(); j++)
+    {
+        Scene.getLight(j).setVisible(true);
+    }
+
+}
+
+function MeshLightsOff()
+{
+    for (var j=0; j<meshLight_num; j++)
+    {
+        luminanceProperties[j].setValue(0);
+    }
+
+}
+
+
+function MeshLightsOn()
+{
+    for (var j=0; j<meshLight_num; j++)
+    {
+        luminanceProperties[j].setValue(luminancePropertyValues[j]);
+    }
+}
+
+
+//==================================================================
+// Get Numbers of Mesh Lights
+//==================================================================
+function GetNumMeshLights()
+{
+
+}
+
+
+//==================================================================
+// Get All Emission Materials
+// refer: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/properties/material_properties/start
+// refer2: https://www.daz3d.com/forums/discussion/98256/selection-in-surface-pane-using-script
+//==================================================================
+function GetMeshLights() {
+    var oObj = null;
+    var oShape = null;
+    var oMat = null;
+    var emissionColorProperty = null;
+    var luminanceProperty = null;
+
+    //var matLightList = [];
+
+    // check very node
+    for (var j=0; j<Scene.getNumNodes(); j++) {
+
+        //debug(Scene.getNode(j).getLabel());
+        // check visible
+        if (!Scene.getNode(j).isVisible()) {
+            debug("this node is invisible: ", Scene.getNode(j).getLabel());
+            continue;
+        }
+
+        // get object of a node
+        oObj = Scene.getNode(j).getObject();
+        if (!oObj) continue;
+
+        //debug(oObj.getName());
+
+        // check every shape in this object
+        for (var k=0; k < oObj.getNumShapes(); k++) {
+
+            //get a shape of an object
+            oShape = oObj.getShape(k);
+            if (!oShape) continue;
+
+            //debug(oShape.getName());
+
+            // check every material in this shape
+            for (var l=0; l < oShape.getNumMaterials(); l++) {
+                //get a material of a shape
+                var oMat = oShape.getMaterial(l);
+                if (!oMat) continue;
+
+                //debug(oMat.getName());
+                //debug(oMat.getLabel());
+
+                //get material's property
+                emissionColorProperty = findElementProperty( oMat, "Emission Color", false );
+                if (!emissionColorProperty) continue;
+
+                luminanceProperty = findElementProperty( oMat, "Luminance", false );
+                if (!luminanceProperty) continue;
+
+                // debug(emissionColorProperty.getValue());
+                // debug(luminanceProperty.getValue());
+
+                if ( emissionColorProperty.getValue() != -16777216 && luminanceProperty.getValue() !=0) {
+                    debug("this is a mesh light:");
+                    debug(Scene.getNode(j).getLabel());
+                    debug(oMat.getName());
+
+                    meshLightNodes.push(Scene.getNode(j));
+                    meshLightMats.push(oMat);
+                    luminanceProperties.push(luminanceProperty);
+                    luminancePropertyValues.push(luminanceProperty.getValue());
+                    meshLight_num++;
+                }
+
+            }
+
+        }
+
+    }
+}
+
+
+
+//==================================================================
+// Get Environment Intensity's float value
+//==================================================================
+function GetEnvIntensity() {
+    var oProperty = findRendererProperty( "DzIrayRenderer", "", "Environment Intensity", false, true );
+    return oProperty.getValue();
+}
+
+
+
+//==================================================================
+// Set Environment Intensity's float value
+//==================================================================
+function SetEnvIntensity(fValue) {
+    var oProperty = findRendererProperty( "DzIrayRenderer", "", "Environment Intensity", false, true );
+    oProperty.setValue(fValue);
+}
+
+
+
+//==================================================================
+// Find A Property From a Pane
+// refer: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/rendering/render_settings_find_property/start
+//==================================================================
+
+/*********************************************************************/
+// Array<DzProperty> : A function for getting a list of the properties in a group
+function getGroupProperties( oGroup, bTraverse, bRecurse )
+{
+    // Declare an array to hold properties
+    var aProperties = [];
+
+    // If a group is not passed in
+    if( !oGroup ){
+        // We are done, return an empty array
+        return aProperties;
+    }
+
+    // Get the number of proeprties in the group
+    var nProperties = oGroup.getNumProperties();
+    // Pre-size the properties array
+    aProperties = new Array( nProperties );
+    // Iterate over the properties, setting each element in the array
+    for( var i = 0; i < nProperties; i += 1 ){
+        // Assign the property to the position in the array
+        aProperties[ i ] = oGroup.getProperty( i );
+    }
+
+    // If we are recursing
+    if( bRecurse ){
+        // Concatenate the properties array from child groups
+        aProperties = aProperties.concat(
+            getGroupProperties( oGroup.getFirstChild(), true, bRecurse ) );
+    }
+
+    // If we are traversing
+    if( bTraverse ){
+        // Concatenate the properties array from sibling groups
+        aProperties = aProperties.concat(
+            getGroupProperties( oGroup.getNextSibling(), bTraverse, bRecurse ) );
+    }
+
+    // Return the array of properties
+    return aProperties;
+};
+
+/*********************************************************************/
+// Array<DzProperty> : A function for getting the list properties for an element
+function getElementProperties( oElement, bTraverse, bRecurse )
+{
+    // Get the property group tree for the element
+    var oPropertyGroupTree = oElement.getPropertyGroups();
+
+    // If the application version is 4.9.4.101 or newer and we want all properties
+    if( App.version64 >= 0x0004000900040065 && bTraverse && bRecurse ){
+        // Return the properties for the element
+        return oPropertyGroupTree.getAllProperties();
+    }
+
+    // Get the first group in the tree
+    var oPropertyGroup = oPropertyGroupTree.getFirstChild();
+    // Return the properties for the element
+    return getGroupProperties( oPropertyGroup, bTraverse, bRecurse );
+};
+
+/*********************************************************************/
+// DzProperty : A function for finding a property associated with an element
+function findElementProperty( oElement, sProperty, bUseLabel )
+{
+    // Whether or not to use optimizations; 4.7.1.44 or newer
+    var bUseOptimization = (App.version64 >= 0x000400070001002c);
+
+    // Declare a working variable
+    var oProperty;
+
+    // If the application version is 4.7.1.44 or newer and we are not using
+    // the label to find, or the application version is 4.11.0.166 or newer
+    if( (bUseOptimization && !bUseLabel) ||
+        App.version64 >= 0x0004000b000000a6 ){
+        // Get the property group tree for the element
+        var oPropertyGroupTree = oElement.getPropertyGroups();
+
+        // If we are using the label
+        if( bUseLabel ){
+            // Attempt to find the property
+            oProperty = oPropertyGroupTree.findPropertyByLabel( sProperty );
+        // If we are not using the label
+        } else {
+            // Attempt to find the property
+            oProperty = oPropertyGroupTree.findProperty( sProperty );
+        }
+
+        // If we found a property
+        if( oProperty ){
+            // We are done, return it
+            return oProperty;
+        }
+    // Otherwise
+    } else {
+        // Get the properties of the element
+        var aProperties = getElementProperties( oElement, true, true );
+        // Iterate over the properties
+        for( var i = 0; i < aProperties.length; i += 1 ){
+            // Get the 'current' property
+            oProperty = aProperties[i];
+
+            // If we are using the label
+            if( bUseLabel ){
+                // If the label of the property is the one we are looking for
+                if( oProperty.getLabel() == sProperty ){
+                    // We are done, return it
+                    return oProperty;
+                }
+            // If we are not using the label
+            } else {
+                // If the name of the property is the one we are looking for
+                if( oProperty.name == sProperty ){
+                    // We are done, return it
+                    return oProperty;
+                }               
+            }
+        }
+    }
+
+    // Declare working variables
+    var oChild;
+
+    // Iterate over the child elements
+    for( var i = 0, nChildren = oElement.getNumElementChildren(); i < nChildren; i += 1 ){
+        // Get the 'current' child element
+        oChild = oElement.getElementChild( i );
+        // Get the property from the child
+        oProperty = findElementProperty( oChild, sProperty, bUseLabel );
+
+        // If we are using a version with optimizations
+        if( bUseOptimization ){
+            // If we have a property
+            if( oProperty ){
+                // We are done, return it
+                return oProperty;
+            }
+        // Otherwise
+        } else {
+            // If we are using the label
+            if( bUseLabel ){
+                // If the label of the property is the one we are looking for
+                if( oProperty.getLabel() == sProperty ){
+                    // We are done, return it
+                    return oProperty;
+                }
+            // If we are not using the label
+            } else {
+                // If the name of the property is the one we are looking for
+                if( oProperty.name == sProperty ){
+                    // We are done, return it
+                    return oProperty;
+                }               
+            }
+        }
+    }
+
+    return null;
+};
+
+/*********************************************************************/
+// DzProperty : A function to find a property associated with a renderer
+function findRendererProperty( sRenderer, sElement, sProperty, bUseLabel, bActivate )
+{
+    // Get the render manager
+    var oRenderMgr = App.getRenderMgr();
+
+    // Find the desired renderer
+    var oRenderer = oRenderMgr.findRenderer( sRenderer );
+    // If we did not find the renderer
+    if( !oRenderer ){
+        // We are done..
+        return null;
+    }
+
+    // Get the active renderer
+    var oActiveRenderer = oRenderMgr.getActiveRenderer();
+
+    // If we have an active renderer and it is not the one we want
+    if( oActiveRenderer && oActiveRenderer.className() != sRenderer ){
+        // If we are not activating the renderer
+        if( !bActivate ){
+            // We are done
+            return null;
+        }
+
+        // Set the active renderer
+        oRenderMgr.setActiveRenderer( oRenderer );
+    }
+
+    // Declare working variables
+    var oElement, oProperty;
+
+    // Get the render elements; which hold the properties
+    var aRenderElements = oRenderMgr.getRenderElementObjects();
+    // Iterate over the elements
+    for( var i = 0; i < aRenderElements.length; i += 1 ){
+        // Get the 'current' element
+        oElement = aRenderElements[i];
+
+        // If an element name is specified and the 'current' element is not
+        // named as the one we are looking for
+        if( !sElement.isEmpty() && oElement.name != sElement ){
+            // Next!
+            continue;
+        }
+
+        // Find a specific property by name
+        oProperty = findElementProperty( oElement, sProperty, bUseLabel );
+        // If we found a property
+        if( oProperty ){
+            // We are done, return it
+            return oProperty;
+        }
+    }
+
+    return null;
+};
+
+
