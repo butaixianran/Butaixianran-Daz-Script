@@ -1,7 +1,7 @@
 //==================================================================
 // This script will unlock all the hidden x,y,z rotation properties on selected character
 //==================================================================
-
+//version: 0.2.0
 
 function UnlockThem() {
 
@@ -13,31 +13,40 @@ function UnlockThem() {
     return
   }
 
+  //Show hidden properties
+  var mw = MainWindow.getActionMgr();
+  if (mw) {
+    var action = mw.findAction('DzParamShowHiddenPropAction');
+    if (!action.checked) {
+      action.trigger();
+    }
+  }
+
 
   //get children
-  var children = character.getNodeChildren(true)
-  var child = null
+  var children = character.getNodeChildren(true);
+  var child = null;
   for(var i=0;i<children.length;i++) {
     //get x,y,z rotation properties
-    child = children[i]
-    x = child.getXRotControl()
-    y = child.getYRotControl()
-    z = child.getZRotControl()
+    child = children[i];
+    x = child.getXRotControl();
+    y = child.getYRotControl();
+    z = child.getZRotControl();
 
     //unlock it
     if (x) {
-      x.lock(false)
+      x.lock(false);
     }
 
     if (y) {
-      y.lock(false)
+      y.lock(false);
     }
 
     if (z) {
-      z.lock(false)
+      z.lock(false);
     }
   }
 
 }
 
-UnlockThem()
+UnlockThem();
